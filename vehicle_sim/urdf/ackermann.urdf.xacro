@@ -218,7 +218,7 @@
     </link>
 
     <joint name="lidar_link_joint" type="fixed">
-        <origin xyz="0.0 0.0 0.175" rpy="0.0 -0.0 0.0" />
+        <origin xyz="0.4 0.0 0.175" rpy="0.0 -0.0 0.0" />
         <parent link="base_link" />
         <child link="lidar_link" />
     </joint>
@@ -232,7 +232,7 @@
         <visual>
             <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
             <geometry>
-                <cylinder radius="0.05" length="0.1"/> 
+                <cylinder radius="0.05" length="0.3"/> 
             </geometry>
             <material name="camera">
                 <color rgba="0.0 0.0 0.0 1"/>
@@ -247,7 +247,7 @@
     </link>
 
     <joint name="camera_link_joint" type="fixed">
-        <origin xyz="0.0 0.0 0.24" rpy="0.0 0.0 0.0" />
+        <origin xyz="0.4 0.0 0.24" rpy="0.0 0.0 0.0" />
         <parent link="base_link" />
         <child link="camera_link" />
     </joint>

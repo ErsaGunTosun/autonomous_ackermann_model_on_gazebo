@@ -14,7 +14,7 @@ def generate_launch_description():
     vehicle_sim_dir = get_package_share_directory('vehicle_sim')
     ros_gz_sim = get_package_share_directory("ros_gz_sim")
 
-    world_path = os.path.join(vehicle_sim_dir, 'worlds', 'empty_world.world')
+    world_path = os.path.join(vehicle_sim_dir, 'worlds', 'empty_world.sdf')
 
     gzserver_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -41,9 +41,10 @@ def generate_launch_description():
                 os.path.join(vehicle_sim_dir,"launch","spawn_entity.launch.py")
             ),
             launch_arguments={
-                'x': "0",
-                'y': "0",
-                'yaw': "0"
+                'x': "24.6789",
+                'y': "-9.5783",
+                'z':"0.09",
+                'yaw': "3.1364"
             }.items()
     )
 
