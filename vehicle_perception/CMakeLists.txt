@@ -8,6 +8,9 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(OpenCV REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -20,5 +23,19 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+add_executable(lane_follow_node src/lane_follow_node.cpp)
+ament_target_dependencies(lane_follow_node 
+  rclcpp
+  sensor_msgs
+  cv_bridge
+  OpenCV
+)
+
+install(TARGETS
+  lane_follow_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 
 ament_package()

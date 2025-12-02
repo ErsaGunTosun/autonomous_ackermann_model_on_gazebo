@@ -27,7 +27,7 @@
     <atmosphere type='adiabatic'/>
 
     <scene>
-      <ambient>0.4 0.4 0.4 1</ambient>
+      <ambient>0.6 0.6 0.6 1</ambient>
       <background>0.7 0.7 0.7 1</background>
       <shadows>false</shadows>
     </scene>
@@ -76,7 +76,7 @@
         <enable_wind>false</enable_wind>
       </link>
       <pose>26.385 -9.57832 0 0 -0 0</pose>
-      <static>false</static>
+      <static>true</static>
       <self_collide>false</self_collide>
     </model>
 
