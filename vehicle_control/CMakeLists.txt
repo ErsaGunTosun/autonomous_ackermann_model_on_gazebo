@@ -8,6 +8,8 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -20,5 +22,18 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+add_executable(lane_controller src/lane_controller_node.cpp)
+ament_target_dependencies(lane_controller 
+  rclcpp
+  std_msgs
+  geometry_msgs
+)
+
+install(TARGETS
+  lane_controller
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 
 ament_package()

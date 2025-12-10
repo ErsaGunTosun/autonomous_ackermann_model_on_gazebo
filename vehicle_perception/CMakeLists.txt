@@ -11,6 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(std_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -30,6 +31,7 @@ ament_target_dependencies(lane_follow_node
   sensor_msgs
   cv_bridge
   OpenCV
+  std_msgs
 )
 
 install(TARGETS
