@@ -12,8 +12,12 @@ import os
 
 def generate_launch_description():
     vehicle_sim_dir = get_package_share_directory('vehicle_sim')
-    ros_gz_sim = get_package_share_directory("ros_gz_sim")
+    vehicle_nav_dir = get_package_share_directory('vehicle_navigation')
+    vehicle_cntrl_dir = get_package_share_directory('vehicle_control')
+    vehicle_prcptn_dir = get_package_share_directory('vehicle_perception')
 
+    # Simulation
+    ros_gz_sim = get_package_share_directory("ros_gz_sim")
     world_path = os.path.join(vehicle_sim_dir, 'worlds', 'empty_world.sdf')
 
     gzserver_launch = IncludeLaunchDescription(
@@ -49,9 +53,31 @@ def generate_launch_description():
     )
 
 
+    # launch includes 
+    navigation_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(vehicle_nav_dir,"launch","bring_up_nav.launch.py")
+        )
+    )
+
+    perception_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(vehicle_prcptn_dir,"launch","bring_up_perception.launch.py")
+        )
+    )
+    
+    control_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(vehicle_cntrl_dir,"launch","bring_up_cntrl.launch.py")
+        )
+    )
+
     return LaunchDescription([
         gzserver_launch,
         gzclient_launch,
         robot_state_publisher,
         spawn_entity,
+        navigation_launch,
+        perception_launch,
+        control_launch
     ])

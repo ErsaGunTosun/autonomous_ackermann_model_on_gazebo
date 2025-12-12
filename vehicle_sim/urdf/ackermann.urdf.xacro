@@ -203,7 +203,7 @@
         <visual>
             <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
             <geometry>
-                 <cylinder radius="0.075" length="0.05"/>
+                 <cylinder radius="0.075" length="0.03"/>
             </geometry>
             <material name="lidar_blue">
                  <color rgba="0.0 0.0 1.0 1"/>
@@ -212,13 +212,13 @@
         <collision>
             <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
             <geometry>
-                <cylinder radius="0.075" length="0.05"/> 
+                <cylinder radius="0.075" length="0.03"/> 
             </geometry>
         </collision>
     </link>
 
     <joint name="lidar_link_joint" type="fixed">
-        <origin xyz="0.5 0.0 -0.160" rpy="0.0 -0.0 0.0" />
+        <origin xyz="0.5 0.0 -0.150" rpy="0.0 -0.0 0.0" />
         <parent link="base_link" />
         <child link="lidar_link" />
     </joint>

@@ -23,17 +23,21 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-add_executable(lane_controller src/lane_controller_node.cpp)
-ament_target_dependencies(lane_controller 
+add_executable(lane_controller_node src/lane_controller_node.cpp)
+ament_target_dependencies(lane_controller_node 
   rclcpp
   std_msgs
   geometry_msgs
 )
 
 install(TARGETS
-  lane_controller
+  lane_controller_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
+install(DIRECTORY
+	launch 
+	DESTINATION share/${PROJECT_NAME}
+)
 
 ament_package()
