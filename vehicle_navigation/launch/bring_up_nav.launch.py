@@ -41,12 +41,11 @@ def generate_launch_description():
             'use_sim_time': 'true',
             'params_file': nav2_file_path, 
             'autostart': 'true',
-            'use_composition': 'True'
         }.items()
     )
 
     return LaunchDescription([
        slam_launch,
+       nav2_launch,
        rviz_node,
-       nav2_launch
     ])
