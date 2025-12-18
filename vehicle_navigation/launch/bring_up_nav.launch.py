@@ -13,6 +13,7 @@ def generate_launch_description():
     
     rviz_config_file = os.path.join(vehicle_nav_dir,'config', 'rviz_config.rviz')
     nav2_file_path = os.path.join(vehicle_nav_dir, 'config', 'nav2_params_ackermann.yaml')
+    slam_config_file = os.path.join(vehicle_nav_dir, 'config', 'slam_toolbox_params.yaml')
     nav2_pkg_dir = get_package_share_directory('nav2_bringup')
     
     slam_launch = IncludeLaunchDescription(
@@ -21,7 +22,7 @@ def generate_launch_description():
             ),
             launch_arguments={
                 'use_sim_time': 'true',
-                'log_level': 'error'
+                'slam_params_file': slam_config_file,
             }.items()
         )
     
