@@ -2,6 +2,7 @@
 
 #include "sensor_msgs/msg/image.hpp"
 #include "std_msgs/msg/float32.hpp"
+#include "std_msgs/msg/bool.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -12,8 +13,17 @@ class LaneFollow: public rclcpp::Node
     public:
     LaneFollow(): Node("lane_follow")
     {
-        timer_ = create_wall_timer(std::chrono::milliseconds(100), std::bind(&LaneFollow::start_operations, this));
-      
+         lane_follow_state_ = create_subscription<std_msgs::msg::Bool>(
+            "/control/lane_follow", 
+            100,     
+            std::bind(&LaneFollow::lane_follow_callback, this, std::placeholders::_1));
+
+        subscriber_ = create_subscription<sensor_msgs::msg::Image>(
+            "/camera", 
+            rclcpp::SensorDataQoS(),  
+            std::bind(&LaneFollow::image_callback, this, std::placeholders::_1));
+
+        publisher_ = this->create_publisher<std_msgs::msg::Float32>("/lane/error", 10);
         cv::namedWindow("CAMERA");
     }
 
@@ -23,6 +33,8 @@ class LaneFollow: public rclcpp::Node
     }
 
     private:
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr lane_follow_state_;
+    
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subscriber_;
     rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr publisher_;
     rclcpp::TimerBase::SharedPtr timer_;
@@ -37,20 +49,21 @@ class LaneFollow: public rclcpp::Node
 
 
     bool is_start = false;
-    
-    void start_operations(){
-        subscriber_ = create_subscription<sensor_msgs::msg::Image>(
-            "/camera", 
-            10,     
-            std::bind(&LaneFollow::image_callback, this, std::placeholders::_1));
 
-        publisher_ = this->create_publisher<std_msgs::msg::Float32>("/lane/error", 10);
-
-        is_start = true;
+    void lane_follow_callback(const std_msgs::msg::Bool::SharedPtr msg){
+        bool data = msg->data;
+        if (is_start && !data){
+            is_start = false;
+        }
+        else if (!is_start && data){
+            is_start = true;
+        }
     }
 
     void image_callback(const sensor_msgs::msg::Image::SharedPtr img)
     {
+        if (!is_start) return;
+
         cv::Mat img_bgr;
         try
         {

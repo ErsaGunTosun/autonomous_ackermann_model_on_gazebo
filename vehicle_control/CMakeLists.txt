@@ -10,6 +10,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -30,8 +32,18 @@ ament_target_dependencies(lane_controller_node
   geometry_msgs
 )
 
+add_executable(mission_manager_node src/mission_manager_node.cpp)
+ament_target_dependencies(mission_manager_node 
+  rclcpp
+  std_msgs
+  geometry_msgs
+  nav_msgs
+)
+
+
 install(TARGETS
   lane_controller_node
+  mission_manager_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

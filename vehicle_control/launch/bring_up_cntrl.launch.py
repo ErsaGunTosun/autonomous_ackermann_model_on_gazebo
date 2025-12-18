@@ -19,6 +19,17 @@ def generate_launch_description():
         }]
     )
 
+    mission_manager_node = Node(
+        package = "vehicle_control",
+        executable="mission_manager_node",
+        name='mission_manager_node',
+        output='screen',
+        parameters = [{
+                "use_sim_time":True,
+        }]
+    )
+
     return LaunchDescription([
-        lane_controlloler_node
+        mission_manager_node,
+        lane_controlloler_node,
     ])

@@ -1,5 +1,6 @@
 #include <memory>
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/float32.hpp"
 #include "geometry_msgs/msg/twist.hpp" 
 
@@ -10,6 +11,11 @@ class LaneController : public rclcpp::Node
 public:
   LaneController() : Node("lane_controller")
   {
+    lane_follow_state_ = create_subscription<std_msgs::msg::Bool>(
+            "/control/lane_follow", 
+            100,     
+            std::bind(&LaneController::lane_follow_callback, this, std::placeholders::_1));
+
     subscription_ = this->create_subscription<std_msgs::msg::Float32>(
       "/lane/error", 10, std::bind(&LaneController::topic_callback, this, _1));
 
@@ -20,8 +26,21 @@ public:
   }
 
 private:
+
+  void lane_follow_callback(const std_msgs::msg::Bool::SharedPtr msg){
+        bool data = msg->data;
+        if (is_start && !data){
+            is_start = false;
+        }
+        else if (!is_start && data){
+            is_start = true;
+        }
+  }
+
   void topic_callback(const std_msgs::msg::Float32::SharedPtr msg) const
   {
+    if(!is_start)return;
+
     float error = msg->data;
     float steering_angle = -1.0 * kp_ * error; 
 
@@ -35,11 +54,15 @@ private:
     publisher_->publish(cmd_msg);
   }
 
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr lane_follow_state_;
+
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subscription_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_;
   
   double kp_;
   double base_speed_;
+  bool is_start;
+
 };
 
 int main(int argc, char * argv[])
