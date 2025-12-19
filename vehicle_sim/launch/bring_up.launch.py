@@ -45,7 +45,7 @@ def generate_launch_description():
                 os.path.join(vehicle_sim_dir,"launch","spawn_entity.launch.py")
             ),
             launch_arguments={
-                'x': "24.6789",
+                'x': "17.6789",
                 'y': "-9.5783",
                 'z':"0.09",
                 'yaw': "3.1364"
