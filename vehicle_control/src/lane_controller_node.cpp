@@ -61,7 +61,7 @@ private:
   
   double kp_;
   double base_speed_;
-  bool is_start;
+  bool is_start = false;
 
 };
 
