@@ -54,12 +54,6 @@ def generate_launch_description():
 
 
     # launch includes 
-    navigation_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(vehicle_nav_dir,"launch","bring_up_nav.launch.py")
-        )
-    )
-
     perception_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(vehicle_prcptn_dir,"launch","bring_up_perception.launch.py")
@@ -77,7 +71,6 @@ def generate_launch_description():
         gzclient_launch,
         robot_state_publisher,
         spawn_entity,
-        navigation_launch,
         perception_launch,
         control_launch
     ])

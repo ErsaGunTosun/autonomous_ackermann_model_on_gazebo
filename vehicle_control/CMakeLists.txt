@@ -45,10 +45,20 @@ ament_target_dependencies(mission_manager_node
   tf2_ros
 )
 
+add_executable(formation_lap_node src/formation_lap_node.cpp)
+ament_target_dependencies(formation_lap_node 
+  rclcpp
+  std_msgs
+  geometry_msgs
+  tf2
+  tf2_ros
+)
+
 
 install(TARGETS
   lane_controller_node
   mission_manager_node
+  formation_lap_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
