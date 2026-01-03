@@ -217,7 +217,6 @@
         </collision>
     </link>
 
-    <!-- Lidar Mounting Bracket (Aracın önüne uzanan kol) -->
     <link name="lidar_mount_link">
         <inertial>
             <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
@@ -227,7 +226,6 @@
         <visual>
             <origin xyz="0.125 0.0 0.0" rpy="0.0 0.0 0.0"/>
             <geometry>
-                <!-- 25cm uzunluğunda, 3cm kalınlığında kol -->
                 <box size="0.25 0.03 0.03"/>
             </geometry>
             <material name="mount_gray">
@@ -243,14 +241,12 @@
     </link>
 
     <joint name="lidar_mount_joint" type="fixed">
-        <!-- Bracket base_link'in önünden başlıyor -->
         <origin xyz="0.5 0.0 -0.12" rpy="0.0 0.0 0.0" />
         <parent link="base_link" />
         <child link="lidar_mount_link" />
     </joint>
 
     <joint name="lidar_link_joint" type="fixed">
-        <!-- Lidar bracket'in ucunda (25cm ileride) -->
         <origin xyz="0.25 0.0 -0.03" rpy="0.0 0.0 0.0" />
         <parent link="lidar_mount_link" />
         <child link="lidar_link" />
