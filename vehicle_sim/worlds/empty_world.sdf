@@ -49,14 +49,14 @@
         <visual name='visual'>
           <geometry>
             <mesh>
-              <uri>file:///home/ersagun/Projects/ackermann_ws/src/vehicle_sim/models/map/track_super.dae</uri>
+              <uri>file:///home/ersagun/Projects/last_ws/src/vehicle_sim/models/map/track_superV5.dae</uri>
             </mesh>
           </geometry>
         </visual>
         <collision name='collision'>
           <geometry>
             <mesh>
-              <uri>file:///home/ersagun/Projects/ackermann_ws/src/vehicle_sim/models/map/track_super.dae</uri>
+              <uri>file:///home/ersagun/Projects/last_ws/src/vehicle_sim/models/map/track_superV5.dae</uri>
             </mesh>
           </geometry>
         </collision>
