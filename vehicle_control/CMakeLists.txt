@@ -8,11 +8,14 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(nav2_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 
 
@@ -54,11 +57,23 @@ ament_target_dependencies(formation_lap_node
   tf2_ros
 )
 
+add_executable(racing_node src/racing_node.cpp)
+ament_target_dependencies(racing_node 
+  rclcpp
+  rclcpp_action
+  std_msgs
+  geometry_msgs
+  nav2_msgs
+  tf2
+  tf2_geometry_msgs
+)
+
 
 install(TARGETS
   lane_controller_node
   mission_manager_node
   formation_lap_node
+  racing_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
