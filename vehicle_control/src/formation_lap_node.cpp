@@ -369,11 +369,11 @@ private:
     
     double get_base_speed(SegmentType type) {
         switch (type) {
-            case SegmentType::STRAIGHT:    return 0.5;
-            case SegmentType::CURVE_LEFT:  return 0.35;
-            case SegmentType::CURVE_RIGHT: return 0.35;
-            case SegmentType::SHARP_CURVE: return 0.25;
-            default: return 0.3;
+            case SegmentType::STRAIGHT:    return 1.2;  // 0.5 → 1.2
+            case SegmentType::CURVE_LEFT:  return 0.8;  // 0.35 → 0.8
+            case SegmentType::CURVE_RIGHT: return 0.8;  // 0.35 → 0.8
+            case SegmentType::SHARP_CURVE: return 0.5;  // 0.25 → 0.5
+            default: return 0.6;
         }
     }
     

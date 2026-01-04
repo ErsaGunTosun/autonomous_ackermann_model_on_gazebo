@@ -42,9 +42,9 @@ def generate_launch_description():
             'total_laps': 3,
             'steering_kp': 0.8,
             'steering_kd': 0.1,
-            'min_speed': 0.15,
-            'max_speed': 0.6,
-            'default_speed': 0.35,
+            'min_speed': 0.2,           # 0.15 → 0.2
+            'max_speed': 1.5,           # 0.6 → 1.5 (2.5x artış!)
+            'default_speed': 0.8,       # 0.35 → 0.8 (2.3x artış!)
             'speed_increase_rate': 1.10,
             'speed_decrease_rate': 0.80,
             'crash_threshold': 0.15,

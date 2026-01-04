@@ -60,17 +60,6 @@ ament_target_dependencies(formation_lap_node
   tf2_ros
 )
 
-add_executable(racing_node src/racing_node.cpp)
-ament_target_dependencies(racing_node 
-  rclcpp
-  rclcpp_action
-  std_msgs
-  geometry_msgs
-  nav2_msgs
-  tf2
-  tf2_geometry_msgs
-)
-
 add_executable(segment_racing_node src/segment_racing_node.cpp)
 ament_target_dependencies(segment_racing_node 
   rclcpp
@@ -86,7 +75,6 @@ install(TARGETS
   lane_controller_node
   mission_manager_node
   formation_lap_node
-  racing_node
   segment_racing_node
   DESTINATION lib/${PROJECT_NAME}
 )
