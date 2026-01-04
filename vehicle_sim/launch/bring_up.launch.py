@@ -52,17 +52,9 @@ def generate_launch_description():
             }.items()
     )
 
-
-    # launch includes 
     perception_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(vehicle_prcptn_dir,"launch","bring_up_perception.launch.py")
-        )
-    )
-    
-    control_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(vehicle_cntrl_dir,"launch","bring_up_cntrl.launch.py")
         )
     )
 
@@ -72,5 +64,4 @@ def generate_launch_description():
         robot_state_publisher,
         spawn_entity,
         perception_launch,
-        control_launch
     ])
