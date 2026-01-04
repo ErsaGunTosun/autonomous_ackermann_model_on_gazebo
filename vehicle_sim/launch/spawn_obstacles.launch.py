@@ -10,7 +10,7 @@ def generate_launch_description():
     sdf_file = os.path.join(pkg_share, 'models', 'static_box', 'model.sdf')
     
     obstacles = [
-        {'name': 'obstacle_1', 'x': '33.0', 'y': '3.0', 'z': '0.0'},
+        {'name': 'obstacle_1', 'x': '33.5', 'y': '3.0', 'z': '0.0'},
         {'name': 'obstacle_2', 'x': '-21.5', 'y': '-2.5', 'z': '0.0'},
         {'name': 'obstacle_3', 'x': '2.0', 'y': '8.0', 'z': '0.0'},
     ]

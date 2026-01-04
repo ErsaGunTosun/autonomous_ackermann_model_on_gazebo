@@ -484,9 +484,33 @@ private:
         steering = std::clamp(steering, -0.5, 0.5);
         
         double speed = target_speed_;
-        if (front_distance_ < 1.0) {
-            speed *= (front_distance_ / 1.0);
+        
+        bool obstacle_detected = false;
+        if (front_distance_ < 5.0) {
+            obstacle_detected = true;
+            
+            if (front_distance_ < 2.5) {
+                speed = min_speed_;
+                RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500,
+                    "CLOSE OBSTACLE! Front distance: %.2f", front_distance_);
+            } else {
+                speed = target_speed_ * 0.7;
+            }
+            
+            double avoidance_steering = 0.0;
+            if (left_distance_ > right_distance_) {
+                avoidance_steering = 0.4;
+            } else {
+                avoidance_steering = -0.4;
+            }
+            
+            steering = steering * 0.2 + avoidance_steering * 0.8;
+            
+            RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 500,
+                "Obstacle avoidance: front=%.2f, steer=%.2f, speed=%.2f",
+                front_distance_, avoidance_steering, speed);
         }
+        
         speed = std::max(min_speed_, speed);
         
         if (min_distance_ < crash_threshold_) {
