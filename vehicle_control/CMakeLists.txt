@@ -11,11 +11,13 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 
 
 
@@ -53,6 +55,7 @@ ament_target_dependencies(formation_lap_node
   rclcpp
   std_msgs
   geometry_msgs
+  sensor_msgs
   tf2
   tf2_ros
 )
@@ -68,12 +71,23 @@ ament_target_dependencies(racing_node
   tf2_geometry_msgs
 )
 
+add_executable(segment_racing_node src/segment_racing_node.cpp)
+ament_target_dependencies(segment_racing_node 
+  rclcpp
+  std_msgs
+  geometry_msgs
+  sensor_msgs
+  tf2
+  tf2_ros
+)
+
 
 install(TARGETS
   lane_controller_node
   mission_manager_node
   formation_lap_node
   racing_node
+  segment_racing_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -9,18 +9,36 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
 def generate_launch_description():
-    """
-    Formation Lap Launch
-    - Navigation (SLAM - harita çıkarmak için)
-    - Formation lap node (tur takibi ve harita kaydetme)
-    """
     vehicle_nav_dir = get_package_share_directory('vehicle_navigation')
-    vehicle_cntrl_dir = get_package_share_directory('vehicle_control')
+    vehicle_perception_dir = get_package_share_directory('vehicle_perception')
     
     navigation_formation_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(vehicle_nav_dir,"launch","bring_up_nav_formation.launch.py")
+            os.path.join(vehicle_nav_dir, "launch", "bring_up_nav_formation.launch.py")
         )
+    )
+    
+    lane_controlloler_node = Node(
+        package = "vehicle_control",
+        executable="lane_controller_node",
+        name='lane_controller_node',
+        output='screen',
+        parameters = [{
+                "use_sim_time":True,
+        }]
+    )
+
+    aruco_detector_node = Node(
+        package='vehicle_perception',
+        executable='aruco_detector_node',
+        name='aruco_detector_node',
+        output='screen',
+        parameters=[{
+            'use_sim_time': True,
+            'marker_size': 0.15,
+            'show_debug_window': True,
+            'dictionary_id': 0,
+        }]
     )
     
     formation_lap_node = Node(
@@ -31,7 +49,6 @@ def generate_launch_description():
         parameters=[{'use_sim_time': True}]
     )
 
-    # Formation lap node kapandığında launch'ı da durdur
     shutdown_on_exit = RegisterEventHandler(
         OnProcessExit(
             target_action=formation_lap_node,
@@ -41,7 +58,8 @@ def generate_launch_description():
 
     return LaunchDescription([
         navigation_formation_launch,
+        lane_controlloler_node,
+        aruco_detector_node,
         formation_lap_node,
         shutdown_on_exit,
     ])
-

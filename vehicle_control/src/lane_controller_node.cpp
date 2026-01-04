@@ -68,7 +68,8 @@ private:
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<LaneController>());
+  auto node = std::make_shared<LaneController>();
+  rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;
 }
