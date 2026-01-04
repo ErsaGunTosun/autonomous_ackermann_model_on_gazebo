@@ -13,6 +13,8 @@ find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(image_transport REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -35,8 +37,20 @@ ament_target_dependencies(lane_follow_node
   std_msgs
 )
 
+add_executable(aruco_detector_node src/aruco_detector_node.cpp)
+ament_target_dependencies(aruco_detector_node 
+  rclcpp
+  sensor_msgs
+  cv_bridge
+  OpenCV
+  std_msgs
+  geometry_msgs
+  visualization_msgs
+)
+
 install(TARGETS
   lane_follow_node
+  aruco_detector_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -45,3 +59,4 @@ install(DIRECTORY
 	DESTINATION share/${PROJECT_NAME}
 )
 ament_package()
+
