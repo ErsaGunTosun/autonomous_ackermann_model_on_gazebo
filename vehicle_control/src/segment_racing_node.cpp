@@ -1,5 +1,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/int32_multi_array.hpp"
+#include "std_msgs/msg/int32.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
@@ -93,6 +94,7 @@ public:
         // Publishers
         cmd_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
         state_pub_ = create_publisher<std_msgs::msg::String>("/racing/state", 10);
+        segment_pub_ = create_publisher<std_msgs::msg::Int32>("/current_segment", 10);
         
         lidar_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
             "/scan",
@@ -160,6 +162,7 @@ private:
     
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr state_pub_;
+    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr segment_pub_;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr lidar_sub_;
     rclcpp::Subscription<std_msgs::msg::Int32MultiArray>::SharedPtr aruco_sub_;
     rclcpp::TimerBase::SharedPtr control_timer_;
@@ -367,6 +370,10 @@ private:
                     
                     current_segment_id_ = it->second;
                     target_speed_ = segments_[current_segment_id_].learned_speed;
+                    
+                    std_msgs::msg::Int32 seg_msg;
+                    seg_msg.data = current_segment_id_;
+                    segment_pub_->publish(seg_msg);
                     had_crash_this_segment_ = false;
                     
                     segment_derivative_sum_ = 0.0;

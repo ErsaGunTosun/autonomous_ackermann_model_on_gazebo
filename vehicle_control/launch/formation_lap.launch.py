@@ -49,6 +49,14 @@ def generate_launch_description():
         parameters=[{'use_sim_time': True}]
     )
 
+    data_logger_node = Node(
+        package='vehicle_analysis',
+        executable='data_logger_node',
+        name='data_logger_node',
+        output='screen',
+        parameters=[{'use_sim_time': True}]
+    )
+
     shutdown_on_exit = RegisterEventHandler(
         OnProcessExit(
             target_action=formation_lap_node,
@@ -61,5 +69,6 @@ def generate_launch_description():
         lane_controlloler_node,
         aruco_detector_node,
         formation_lap_node,
+        data_logger_node,
         shutdown_on_exit,
     ])

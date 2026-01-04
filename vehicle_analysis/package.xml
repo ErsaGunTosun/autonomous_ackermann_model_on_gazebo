@@ -3,13 +3,17 @@
 <package format="3">
   <name>vehicle_analysis</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Performance analytics and data logging for autonomous racing</description>
   <maintainer email="ersagunfatihdev@gmail.com">ersagun</maintainer>
-  <license>TODO: License declaration</license>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

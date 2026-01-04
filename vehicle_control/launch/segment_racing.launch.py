@@ -45,6 +45,14 @@ def generate_launch_description():
         }]
     )
 
+    data_logger_node = Node(
+        package='vehicle_analysis',
+        executable='data_logger_node',
+        name='data_logger_node',
+        output='screen',
+        parameters=[{'use_sim_time': True}]
+    )
+
     shutdown_on_exit = RegisterEventHandler(
         OnProcessExit(
             target_action=segment_racing_node,
@@ -55,5 +63,6 @@ def generate_launch_description():
     return LaunchDescription([
         aruco_detector_node,
         segment_racing_node,
+        data_logger_node,
         shutdown_on_exit,
     ])
