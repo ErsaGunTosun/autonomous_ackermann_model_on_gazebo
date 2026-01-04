@@ -33,6 +33,7 @@ struct Segment {
     SegmentType type;
     double base_speed;
     double learned_speed;
+    double steering_multiplier;  // NEW: Steering aggressiveness (default 1.0)
     double x, y;
 };
 
@@ -333,6 +334,7 @@ private:
         seg.type = determine_segment_type(net_change_deg, is_s_curve);
         seg.base_speed = get_base_speed(seg.type);
         seg.learned_speed = seg.base_speed;
+        seg.steering_multiplier = 1.0;
         seg.x = active_segment_.start_x;
         seg.y = active_segment_.start_y;
         
@@ -369,10 +371,10 @@ private:
     
     double get_base_speed(SegmentType type) {
         switch (type) {
-            case SegmentType::STRAIGHT:    return 1.2;  // 0.5 → 1.2
-            case SegmentType::CURVE_LEFT:  return 0.8;  // 0.35 → 0.8
-            case SegmentType::CURVE_RIGHT: return 0.8;  // 0.35 → 0.8
-            case SegmentType::SHARP_CURVE: return 0.5;  // 0.25 → 0.5
+            case SegmentType::STRAIGHT:    return 1.2;
+            case SegmentType::CURVE_LEFT:  return 0.8;
+            case SegmentType::CURVE_RIGHT: return 0.8;
+            case SegmentType::SHARP_CURVE: return 0.5;
             default: return 0.6;
         }
     }
@@ -447,6 +449,7 @@ private:
             file << "    type: " << segment_type_to_string(seg.type) << "\n";
             file << "    base_speed: " << std::fixed << std::setprecision(2) << seg.base_speed << "\n";
             file << "    learned_speed: " << std::fixed << std::setprecision(2) << seg.learned_speed << "\n";
+            file << "    steering_multiplier: " << std::fixed << std::setprecision(2) << seg.steering_multiplier << "\n";
             file << "    success_count: 0\n";
             file << "    crash_count: 0\n";
         }

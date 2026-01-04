@@ -9,15 +9,8 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
 def generate_launch_description():
-    """
-    Segment Racing Launch
-    - Gazebo simülasyonu (ayrı başlatılmalı)
-    - ArUco Detector (segment geçişi için)
-    - Segment Racing Node (Lidar centering + segment hız kontrolü)
-    """
     vehicle_perception_dir = get_package_share_directory('vehicle_perception')
     
-    # ArUco Detector Node
     aruco_detector_node = Node(
         package='vehicle_perception',
         executable='aruco_detector_node',
@@ -31,7 +24,6 @@ def generate_launch_description():
         }]
     )
     
-    # Segment Racing Node
     segment_racing_node = Node(
         package='vehicle_control',
         executable='segment_racing_node',
@@ -42,9 +34,9 @@ def generate_launch_description():
             'total_laps': 3,
             'steering_kp': 0.8,
             'steering_kd': 0.1,
-            'min_speed': 0.2,           # 0.15 → 0.2
-            'max_speed': 1.5,           # 0.6 → 1.5 (2.5x artış!)
-            'default_speed': 0.8,       # 0.35 → 0.8 (2.3x artış!)
+            'min_speed': 0.2,
+            'max_speed': 2.0,
+            'default_speed': 0.8,
             'speed_increase_rate': 1.10,
             'speed_decrease_rate': 0.80,
             'crash_threshold': 0.15,
@@ -53,7 +45,6 @@ def generate_launch_description():
         }]
     )
 
-    # Racing node kapandığında launch'ı da durdur
     shutdown_on_exit = RegisterEventHandler(
         OnProcessExit(
             target_action=segment_racing_node,

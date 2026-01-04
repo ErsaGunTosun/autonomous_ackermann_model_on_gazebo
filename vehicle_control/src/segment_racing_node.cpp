@@ -1,15 +1,3 @@
-/**
- * Segment Racing Node
- * 
- * Lidar tabanlı direksiyon kontrolü + Segment tabanlı hız optimizasyonu
- * 
- * Özellikler:
- * - Lidar ile duvarlara eşit mesafede kalma (centering)
- * - ArUco marker ile segment geçişi algılama
- * - Segment bazlı hız kontrolü
- * - Tur bazlı öğrenme (başarı/başarısızlık)
- */
-
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/int32_multi_array.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -32,14 +20,14 @@
 #include <iomanip>
 #include <algorithm>
 
-// Segment yapısı
 struct Segment {
     int id;
-    int start_aruco_id;      // Segment'in başladığı ArUco marker
-    int end_aruco_id;        // Segment'in bittiği ArUco marker
+    int start_aruco_id;
+    int end_aruco_id;
     std::string type;
     double base_speed;
     double learned_speed;
+    double steering_multiplier;
     int success_count;
     int crash_count;
 };
@@ -56,16 +44,15 @@ public:
 
     SegmentRacingNode() : Node("segment_racing_node")
     {
-        // Parametreler
         this->declare_parameter<int>("total_laps", 3);
         this->declare_parameter<double>("steering_kp", 0.8);
         this->declare_parameter<double>("steering_kd", 0.1);
         this->declare_parameter<double>("min_speed", 0.15);
         this->declare_parameter<double>("max_speed", 0.6);
         this->declare_parameter<double>("default_speed", 0.35);
-        this->declare_parameter<double>("speed_increase_rate", 1.10);  // %10 artış
-        this->declare_parameter<double>("speed_decrease_rate", 0.80);  // %20 azalış
-        this->declare_parameter<double>("crash_threshold", 0.15);      // Çarpma mesafesi
+        this->declare_parameter<double>("speed_increase_rate", 1.10);
+        this->declare_parameter<double>("speed_decrease_rate", 0.80);
+        this->declare_parameter<double>("crash_threshold", 0.15);
         this->declare_parameter<double>("start_box_radius", 1.5);
         this->declare_parameter<double>("min_leave_distance", 3.0);
         
@@ -81,7 +68,6 @@ public:
         start_box_radius_ = this->get_parameter("start_box_radius").as_double();
         min_leave_distance_ = this->get_parameter("min_leave_distance").as_double();
         
-        // Durum değişkenleri
         current_state_ = State::WAITING_START;
         current_lap_ = 0;
         current_segment_id_ = -1;
@@ -97,6 +83,9 @@ public:
         has_left_start_ = false;
         had_crash_this_segment_ = false;
         
+        segment_derivative_sum_ = 0.0;
+        segment_control_count_ = 0;
+        
         // TF
         tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
         tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
@@ -105,7 +94,6 @@ public:
         cmd_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
         state_pub_ = create_publisher<std_msgs::msg::String>("/racing/state", 10);
         
-        // Subscribers
         lidar_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
             "/scan",
             rclcpp::SensorDataQoS(),
@@ -115,13 +103,9 @@ public:
             "/aruco/detected_ids",
             10,
             std::bind(&SegmentRacingNode::aruco_callback, this, std::placeholders::_1));
-        
-        // Control timer
         control_timer_ = create_wall_timer(
-            std::chrono::milliseconds(50),  // 20 Hz
+            std::chrono::milliseconds(50),
             std::bind(&SegmentRacingNode::control_loop, this));
-        
-        // Segment haritasını yükle
         load_segment_map();
         
         RCLCPP_INFO(get_logger(), "===========================================");
@@ -132,27 +116,23 @@ public:
     }
 
 private:
-    // State
     State current_state_;
     int current_lap_;
     int total_laps_;
     int current_segment_id_;
     double target_speed_;
     
-    // Pozisyon
     double start_x_, start_y_;
     double current_x_, current_y_;
     bool start_recorded_;
     bool has_left_start_;
     
-    // Lidar verileri
     double left_distance_;
     double right_distance_;
     double front_distance_;
     double min_distance_;
     double previous_error_;
     
-    // Kontrol parametreleri
     double steering_kp_;
     double steering_kd_;
     double min_speed_;
@@ -164,21 +144,20 @@ private:
     double start_box_radius_;
     double min_leave_distance_;
     
-    // Segment verileri
     std::vector<Segment> segments_;
-    std::map<int, int> aruco_to_segment_;  // start_aruco_id -> Segment index
+    std::map<int, int> aruco_to_segment_;
     std::set<int> detected_markers_this_lap_;
     bool had_crash_this_segment_;
     
-    // Tur istatistikleri
+    double segment_derivative_sum_;
+    int segment_control_count_;
+    
     std::vector<double> lap_times_;
     rclcpp::Time lap_start_time_;
     
-    // TF
     std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
     
-    // ROS
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr state_pub_;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr lidar_sub_;
@@ -213,6 +192,7 @@ private:
                 }
                 in_segment = true;
                 current_seg = Segment();
+                current_seg.steering_multiplier = 1.0;  // Default if not in YAML
                 std::regex re("id:\\s*(\\d+)");
                 std::smatch match;
                 if (std::regex_search(line, match, re)) {
@@ -245,6 +225,13 @@ private:
                 std::smatch match;
                 if (std::regex_search(line, match, re)) {
                     current_seg.learned_speed = std::stod(match[1]);
+                }
+            }
+            else if (line.find("steering_multiplier:") != std::string::npos && in_segment) {
+                std::regex re("steering_multiplier:\\s*([\\d.]+)");
+                std::smatch match;
+                if (std::regex_search(line, match, re)) {
+                    current_seg.steering_multiplier = std::stod(match[1]);
                 }
             }
             else if (line.find("base_speed:") != std::string::npos && in_segment) {
@@ -306,6 +293,7 @@ private:
             file << "    type: " << seg.type << "\n";
             file << "    base_speed: " << std::fixed << std::setprecision(2) << seg.base_speed << "\n";
             file << "    learned_speed: " << std::fixed << std::setprecision(2) << seg.learned_speed << "\n";
+            file << "    steering_multiplier: " << std::fixed << std::setprecision(2) << seg.steering_multiplier << "\n";
             file << "    success_count: " << seg.success_count << "\n";
             file << "    crash_count: " << seg.crash_count << "\n";
         }
@@ -318,12 +306,9 @@ private:
         int num_readings = msg->ranges.size();
         if (num_readings == 0) return;
         
-        // Gazebo Lidar: 270 samples, -82° to +82° (164° total FOV)
-        // Index 0 = -82°, Index 135 = 0°, Index 269 = +82°
-        int center = num_readings / 2;  // 135 = 0°
+        int center = num_readings / 2;
         
-        // Ön (0° ± 10°)
-        int front_angle_samples = static_cast<int>((10.0 / 164.0) * num_readings);  // ~16 samples
+        int front_angle_samples = static_cast<int>((10.0 / 164.0) * num_readings);
         double front_sum = 0.0;
         int front_count = 0;
         for (int i = center - front_angle_samples; i < center + front_angle_samples; ++i) {
@@ -335,11 +320,8 @@ private:
         }
         front_distance_ = (front_count > 0) ? (front_sum / front_count) : 10.0;
         
-        // Sol taraf: 60° to 82° (index 220-270)
-        // angle_deg = (index - center) * (164.0 / 270.0)
-        // 60° → index ≈ 135 + (60 * 270 / 164) ≈ 234
         int left_start = center + static_cast<int>((60.0 / 164.0) * num_readings);  
-        int left_end = num_readings - 1;  // 82°
+        int left_end = num_readings - 1; 
         double left_sum = 0.0;
         int left_count = 0;
         for (int i = left_start; i <= left_end && i < num_readings; ++i) {
@@ -350,8 +332,7 @@ private:
         }
         left_distance_ = (left_count > 0) ? (left_sum / left_count) : 10.0;
         
-        // Sağ taraf: -82° to -60° (index 0-36)
-        int right_start = 0;  // -82°
+        int right_start = 0; 
         int right_end = center - static_cast<int>((60.0 / 164.0) * num_readings);
         double right_sum = 0.0;
         int right_count = 0;
@@ -362,8 +343,7 @@ private:
             }
         }
         right_distance_ = (right_count > 0) ? (right_sum / right_count) : 10.0;
-        
-        // Minimum mesafe (çarpma tespiti için)
+    
         min_distance_ = 10.0;
         for (int i = 0; i < num_readings; ++i) {
             if (std::isfinite(msg->ranges[i]) && msg->ranges[i] > msg->range_min) {
@@ -376,22 +356,21 @@ private:
         if (current_state_ != State::RACING) return;
         
         for (int marker_id : msg->data) {
-            // Bu turda daha önce bu marker görülmemiş mi?
             if (detected_markers_this_lap_.find(marker_id) == detected_markers_this_lap_.end()) {
                 detected_markers_this_lap_.insert(marker_id);
                 
-                // Segment geçişi
                 auto it = aruco_to_segment_.find(marker_id);
                 if (it != aruco_to_segment_.end()) {
-                    // Önceki segment'i güncelle
                     if (current_segment_id_ >= 0 && current_segment_id_ < static_cast<int>(segments_.size())) {
                         update_segment_stats(current_segment_id_, !had_crash_this_segment_);
                     }
                     
-                    // Yeni segment'e geç
                     current_segment_id_ = it->second;
                     target_speed_ = segments_[current_segment_id_].learned_speed;
                     had_crash_this_segment_ = false;
+                    
+                    segment_derivative_sum_ = 0.0;
+                    segment_control_count_ = 0;
                     
                     RCLCPP_INFO(get_logger(), "SEGMENT %d: ArUco=%d, Speed=%.2f m/s",
                                 current_segment_id_, marker_id, target_speed_);
@@ -407,14 +386,37 @@ private:
         
         if (success) {
             seg.success_count++;
-            // Başarılı → hız artır
             seg.learned_speed = std::min(max_speed_, seg.learned_speed * speed_increase_rate_);
-            RCLCPP_DEBUG(get_logger(), "Segment %d SUCCESS: new speed=%.2f", segment_id, seg.learned_speed);
+            
+            if (segment_control_count_ > 10) { 
+                double avg_derivative = segment_derivative_sum_ / segment_control_count_;
+                
+                if (avg_derivative < 0.005) {
+                    seg.steering_multiplier *= 1.05;
+                    seg.steering_multiplier = std::min(1.3, seg.steering_multiplier);
+                    RCLCPP_INFO(get_logger(), "Seg %d: Very smooth (%.3f), steering↑ %.2f", 
+                                segment_id, avg_derivative, seg.steering_multiplier);
+                } else if (avg_derivative > 0.012) {
+                    seg.steering_multiplier *= 0.95;
+                    seg.steering_multiplier = std::max(0.7, seg.steering_multiplier);
+                    RCLCPP_INFO(get_logger(), "Seg %d: Oscillating (%.3f), steering↓ %.2f", 
+                                segment_id, avg_derivative, seg.steering_multiplier);
+                } else {
+                    RCLCPP_INFO(get_logger(), "Seg %d: Normal turn (%.3f), steering= %.2f", 
+                                segment_id, avg_derivative, seg.steering_multiplier);
+                }
+            }
+            
+            RCLCPP_INFO(get_logger(), "Segment %d SUCCESS: speed=%.2f, steer=%.2f", 
+                        segment_id, seg.learned_speed, seg.steering_multiplier);
         } else {
             seg.crash_count++;
-            // Başarısız → hız azalt
             seg.learned_speed = std::max(min_speed_, seg.learned_speed * speed_decrease_rate_);
-            RCLCPP_WARN(get_logger(), "Segment %d ISSUE: new speed=%.2f", segment_id, seg.learned_speed);
+            seg.steering_multiplier *= 0.90;
+            seg.steering_multiplier = std::max(0.7, seg.steering_multiplier);
+            
+            RCLCPP_WARN(get_logger(), "Segment %d CRASH: speed=%.2f, steer=%.2f", 
+                        segment_id, seg.learned_speed, seg.steering_multiplier);
         }
     }
     
@@ -457,27 +459,29 @@ private:
     geometry_msgs::msg::Twist compute_cmd_vel() {
         geometry_msgs::msg::Twist cmd;
         
-        // Centering error: sol-sağ farkı
-        // Pozitif → sol yak (sağa dön)
-        // Negatif → sağ yakın (sola dön)
         double error = left_distance_ - right_distance_;
         
-        // PD kontrol (EKSİ İŞARETİ KALDIRILDI - düzeltildi!)
         double derivative = error - previous_error_;
-        double steering = steering_kp_ * error + steering_kd_ * derivative;
+        double base_steering = steering_kp_ * error + steering_kd_ * derivative;
         previous_error_ = error;
         
-        // Direksiyon sınırları
+        double multiplier = 1.0;
+        if (current_segment_id_ >= 0 && current_segment_id_ < static_cast<int>(segments_.size())) {
+            multiplier = segments_[current_segment_id_].steering_multiplier;
+        }
+        double steering = base_steering * multiplier;
+        
+        segment_derivative_sum_ += std::abs(derivative);
+        segment_control_count_++;
+        
         steering = std::clamp(steering, -0.5, 0.5);
         
-        // Hız - ön mesafeye göre yavaşla
         double speed = target_speed_;
         if (front_distance_ < 1.0) {
             speed *= (front_distance_ / 1.0);
         }
         speed = std::max(min_speed_, speed);
         
-        // Çarpma tespiti
         if (min_distance_ < crash_threshold_) {
             had_crash_this_segment_ = true;
             RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, 
@@ -494,7 +498,6 @@ private:
         double lap_time = (this->now() - lap_start_time_).seconds();
         lap_times_.push_back(lap_time);
         
-        // Son segment'i güncelle
         if (current_segment_id_ >= 0) {
             update_segment_stats(current_segment_id_, !had_crash_this_segment_);
         }
@@ -503,10 +506,8 @@ private:
         RCLCPP_INFO(get_logger(), "LAP %d COMPLETED! Time: %.2f s", current_lap_, lap_time);
         RCLCPP_INFO(get_logger(), "===========================================");
         
-        // Segment haritasını kaydet (öğrenilen hızlarla)
         save_segment_map();
         
-        // Sonraki tur için hazırlan
         detected_markers_this_lap_.clear();
         current_segment_id_ = -1;
         had_crash_this_segment_ = false;
@@ -562,17 +563,14 @@ private:
             case State::RACING: {
                 publish_state("RACING_LAP_" + std::to_string(current_lap_));
                 
-                // Direksiyon ve hız kontrolü
                 auto cmd = compute_cmd_vel();
                 cmd_vel_pub_->publish(cmd);
                 
-                // Başlangıç bölgesinden ayrıldı mı?
                 if (!has_left_start_ && has_left_start_area()) {
                     has_left_start_ = true;
                     RCLCPP_INFO(get_logger(), "Left start area");
                 }
                 
-                // Tur tamamlandı mı?
                 if (has_left_start_ && is_in_start_box()) {
                     on_lap_complete();
                     
@@ -588,7 +586,6 @@ private:
             }
             
             case State::LAP_COMPLETE: {
-                // Geçiş durumu, hemen RACING'e geçiyor
                 break;
             }
             
@@ -608,7 +605,8 @@ private:
 int main(int argc, char** argv)
 {
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<SegmentRacingNode>());
+    auto node = std::make_shared<SegmentRacingNode>();
+    rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;
 }
